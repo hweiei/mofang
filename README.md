@@ -9,6 +9,35 @@
 - 工作台：浏览器里读稿、改稿、审批、看进度。
 - 书都在你自己电脑上的一个文件夹里，是普通的 Markdown 文件。
 
+![墨坊工作台 · 书库总览](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/library.jpg)
+
+## 看看它长什么样
+
+agent 在后台写，你在工作台（`novel ui`）里读稿、拍板、下指令。下面都是真实界面，书是用墨坊写的演示书。
+
+**读稿与终审**：左边章节，中间正文，右边是程序数出来的体检（字数、对话占比、句长、AI 腔）和这一章的账本。不满意可以直接改稿，你的改动会被记下来，之后的章节会学你的语感。
+
+![读稿与终审](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/chapters.jpg)
+
+**多稿对比**：每章可以出多稿，初稿和自改稿逐句对比，挑一稿定稿。
+
+![多稿对比](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/drafts.jpg)
+
+| 大纲与规划 | 伏笔看板 |
+|---|---|
+| ![大纲](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/plan.jpg) | ![伏笔看板](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/threads.jpg) |
+| 选题、设定、卷纲、大纲都在这里审，主线和每章的事件 / 爽点 / 钩子一目了然。 | 每章埋下和回收的伏笔自动记账，太久没推进的会提醒。 |
+
+| 质量体检 | 短剧剧本 |
+|---|---|
+| ![体检](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/health.jpg) | ![短剧剧本](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/drama.jpg) |
+| 作者改动率、穿帮、返工、坏例复发……只报数字、不打分，改了提示词可以和基线比。 | 原创短剧剧本，配读者试读反馈；可再出动态漫 / 真人 / AI 视频分镜和 Excel 拍摄表。 |
+
+| 本书总览 | 夜读模式 |
+|---|---|
+| ![本书总览](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/overview.jpg) | ![夜读模式](https://raw.githubusercontent.com/hweiei/mofang/main/docs/images/chapters-dark.jpg) |
+| 书脊式书架、节奏曲线、下一步由谁来做。 | 写到深夜也不刺眼。 |
+
 ## 下载
 
 到 [Releases](../../releases) 下载对应系统的压缩包，解压得到 `novel`（Windows 上是 `novel.exe`）。
