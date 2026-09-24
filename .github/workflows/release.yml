@@ -35,6 +35,11 @@ jobs:
     defaults:
       run: { shell: bash }
     steps:
+      - name: 检查源码钥匙
+        env:
+          K: ${{ secrets.SOURCE_SSH_KEY }}
+        run: |
+          [ -n "$K" ] || { echo "::error::本仓库没有 Actions secret SOURCE_SSH_KEY（Settings → Secrets and variables → Actions → Repository secrets），拉不到私有源码"; exit 1; }
       - uses: actions/checkout@v4
         with:
           repository: ${{ env.SOURCE_REPO }}
