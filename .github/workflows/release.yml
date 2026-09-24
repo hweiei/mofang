@@ -1,0 +1,92 @@
+# 墨坊发布（D-0032）。这个工作流放在公开的发布仓库里运行：
+#   用只读 deploy key 拉私有源码仓库的同名 tag → 五平台编译 → 冒烟 → 在本仓库建 Release。
+# 本仓库需要一个 secret：SOURCE_SSH_KEY = 私有源码仓库只读 deploy key 的私钥。
+# 公开仓库的 Actions 分钟数免费；运行日志公开，但不含源码。
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "要发布的 tag（源码仓库和本仓库都要有）"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  SOURCE_REPO: hweiei/storypannel
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, target: bun-windows-x64, name: windows-x64, smoke: true }
+          - { os: macos-14, target: bun-darwin-arm64, name: macos-arm64, smoke: true }
+          - { os: macos-14, target: bun-darwin-x64, name: macos-x64, smoke: false }
+          - { os: ubuntu-latest, target: bun-linux-x64, name: linux-x64, smoke: true }
+          - { os: ubuntu-latest, target: bun-linux-arm64, name: linux-arm64, smoke: false }
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run: { shell: bash }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SOURCE_REPO }}
+          ref: ${{ env.TAG }}
+          ssh-key: ${{ secrets.SOURCE_SSH_KEY }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: oven-sh/setup-bun@v2
+      - run: npm ci --no-audit --no-fund
+      - name: 测试
+        if: matrix.name == 'linux-x64'
+        run: npm run verify
+      - name: 编译
+        run: npx tsx scripts/build-bin.ts --targets ${{ matrix.target }}
+        env:
+          MOFANG_VERSION: ${{ env.TAG }}
+      - name: 冒烟
+        if: matrix.smoke
+        run: npx tsx scripts/smoke-bin.ts "$(ls build/bin/novel-*)"
+      - name: 打包
+        run: |
+          mkdir -p pkg/mofang
+          f=$(ls build/bin/novel-*)
+          case "$f" in *.exe) cp "$f" pkg/mofang/novel.exe ;; *) cp "$f" pkg/mofang/novel; chmod +x pkg/mofang/novel ;; esac
+          cp release/public/README.md pkg/mofang/使用说明.md
+          cp release/public/LICENSE pkg/mofang/LICENSE.txt
+          cd pkg
+          if [ "${{ runner.os }}" = "Windows" ]; then 7z a -tzip ../mofang-${{ matrix.name }}.zip mofang >/dev/null; else tar czf ../mofang-${{ matrix.name }}.tar.gz mofang; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mofang-${{ matrix.name }}
+          path: mofang-${{ matrix.name }}.*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: dist-all, merge-multiple: true }
+      - name: 校验和
+        run: cd dist-all && sha256sum mofang-* > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: 更新说明
+        run: |
+          awk -v v="## $TAG" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "墨坊 $TAG" > notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: 墨坊 ${{ env.TAG }}
+          body_path: notes.md
+          files: dist-all/*
